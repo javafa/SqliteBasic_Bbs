@@ -21,10 +21,16 @@ public class ListFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private OnFragmentInteractionListener mListener;
-
-    ListView list;
+    ListView listView;
     Button btnWrite;
+
+    // 메인액티비티와 통신하는 리스너
+    OnFragmentListener listener;
+
+    CustomAdapter adapter;
+
+    // 목록에서 사용할 데이터셋 정의
+    ArrayList<BbsData> datas = new ArrayList<>();
 
     public ListFragment() {
         // Required empty public constructor
@@ -53,93 +59,80 @@ public class ListFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_list, container, false);
 
+        // Write 버튼
         btnWrite = (Button) view.findViewById(R.id.btnWrite);
         btnWrite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onFragmentInteraction(MainActivity.ACTION_WRITE);
+                listener.action(MainActivity.ACTION_WRITE);
             }
         });
 
-        list = (ListView)view.findViewById(R.id.listView);
-        CustomAdapter adapter = new CustomAdapter(mListener.getDatas(),inflater);
-        list.setAdapter(adapter);
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView = (ListView) view.findViewById(R.id.listView);
+        adapter = new CustomAdapter(inflater);
+        listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mListener.onFragmentInteraction(MainActivity.ACTION_MODIFY);
+                // 현재 리스트에 있는 클릭한 데이터를 가져오고
+                BbsData data = datas.get(position);
+                // 해당 데이터의 bbs no를 리스너를 통해 Edit Fragment로 넘겨준다
+                int bbsno = data.no;
+                listener.actionEdit(bbsno);
             }
         });
-
         return view;
     }
 
     @Override
     public void onStart(){
         super.onStart();
-
-
-    }
-
-    public void onButtonPressed(int actionFlag) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(actionFlag);
-        }
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        // 부모 activity에 interface가 구현되지 않았으면 Exception을 발생시켜 강제로 App을 종료시킨다
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+        // 메인 액티비티가 OnFragmentListener를 구현했는지 확인
+        if(context instanceof OnFragmentListener){
+            listener = (OnFragmentListener) context;
+        }else{ // 구현하지 않았으면 MainActivity와 통신할 방법이 없으므로 앱을 죽인다
+            throw  new RuntimeException();
         }
+
+        setList();
+    }
+
+    public void setList(){
+        datas = DataUtil.selectAll(getContext());
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
     }
 
     class CustomAdapter extends BaseAdapter{
-
         LayoutInflater inflater;
-        ArrayList<BbsData> datas = new ArrayList<>();
-
-        public CustomAdapter(ArrayList<BbsData> datas,LayoutInflater inflater){
-            this.datas = datas;
-            this.inflater = inflater;
-        }
-
+        public CustomAdapter(LayoutInflater inflater){ this.inflater = inflater; }
         @Override
         public int getCount() {
             return datas.size();
         }
-
         @Override
         public Object getItem(int position) {
             return datas.get(position);
         }
-
         @Override
         public long getItemId(int position) {
             return position;
         }
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            if(convertView == null)
-                convertView = inflater.inflate(R.layout.fragment_list_item,null);
-            TextView txtNo = (TextView) convertView.findViewById(R.id.txtNo);
-            TextView txtTitle = (TextView) convertView.findViewById(R.id.txtTitle);
-
-            txtNo.setText(datas.get(position).no);
-            txtTitle.setText(datas.get(position).title);
-
+            if(convertView == null) convertView = inflater.inflate(R.layout.fragment_list_item,null);
+            TextView no = (TextView) convertView.findViewById(R.id.txtNo);
+            TextView title = (TextView) convertView.findViewById(R.id.txtTitle);
+            no.setText(datas.get(position).no+"");
+            title.setText(datas.get(position).title);
             return convertView;
         }
     }
