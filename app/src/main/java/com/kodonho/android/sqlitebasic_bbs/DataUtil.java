@@ -12,12 +12,10 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-/**
- * Created by fastcampus on 2016-10-11.
- */
 public class DataUtil {
     public static final String DB_NAME = "sqlite.db";
-    // 데이터 manipulation
+
+    // DB에 데이터를 입력하는 함수
     public static void insert(Context context, BbsData data) {
         SQLiteDatabase db = null;
         try {
@@ -39,6 +37,7 @@ public class DataUtil {
         }
     }
 
+    // DB에서 한개의 데이터를 가져오는 함수
     public static BbsData select(Context context, int bbsno) {
         BbsData data = new BbsData();
         SQLiteDatabase db = null;
@@ -72,7 +71,40 @@ public class DataUtil {
         return data;
     }
 
-    public static ArrayList<BbsData> selectAll(Context context) {
+    public static int selectCount(Context context) {
+        return selectCountByWord(context, "");
+    }
+
+    // DB에서 데이터의 총 개수를 가져오는 함수
+    public static int selectCountByWord(Context context, String word) {
+        int count = 0;
+        SQLiteDatabase db = null;
+        Cursor cursor = null;
+        try {
+            db = openDatabase(context,DB_NAME);
+            String where = "";
+            if(!"".equals(word))
+                where = " where title like '%"+word+"%' ";
+            String query = "select count(*) from bbs3 "+where;
+            cursor = db.rawQuery(query,null);
+            if(cursor.moveToNext()){
+                count = cursor.getInt(0);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            try {
+                if (db != null) db.close();
+                if (cursor != null) cursor.close();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        return count;
+    }
+
+    // DB에서 전체 데이터를 가져오는 함수
+    public static ArrayList<BbsData> selectAllByWord(Context context, int count, String word) {
         ArrayList<BbsData> datas = new ArrayList<>();
         SQLiteDatabase db = null;
         Cursor cursor = null;
@@ -80,7 +112,12 @@ public class DataUtil {
             //1. db 를 연결한다
             db = openDatabase(context,DB_NAME);
             //2. 쿼리를 만든다
-            String query = "select no,title from bbs3";
+            //2.1 조건절을 만든다
+            String where ="";
+            if(!"".equals(word))
+                where = " where title like '%"+word+"%' ";
+            //2.2 word 가 없으면 where 조건절에 아무것도 세팅되지 않는다
+            String query = "select no,title from bbs3 "+where+" order by no desc limit "+count;
             //3. 쿼리를 실행한다
             cursor = db.rawQuery(query,null);
             //4. 반복문을 통해 값을 datas에 담아준다
@@ -106,6 +143,12 @@ public class DataUtil {
         return datas;
     }
 
+    // DB에서 전체 데이터를 가져오는 함수
+    public static ArrayList<BbsData> selectAll(Context context, int count) {
+        return selectAllByWord(context,count,"");
+    }
+
+    // DB에서 한개의 데이터내용을 수정하는 함수
     public static void update(Context context, BbsData data) {
         SQLiteDatabase db = null;
         try {

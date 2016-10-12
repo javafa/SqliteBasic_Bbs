@@ -3,6 +3,7 @@ package com.kodonho.android.sqlitebasic_bbs;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +38,10 @@ public class EditFragment extends Fragment {
     // Database 에서 bbsno 에 해당하는 레코드를 가져와서 화면에 뿌려준다
     public void setData(int bbsno){
         BbsData data = DataUtil.select(getContext(), bbsno);
-
+        Log.i("setData","bbsno="+bbsno);
+        Log.i("setData","title="+data.title);
+        Log.i("setData","name="+data.name);
+        Log.i("setData","contents="+data.contents);
         title.setText(data.title);
         name.setText(data.name);
         contents.setText(data.contents);

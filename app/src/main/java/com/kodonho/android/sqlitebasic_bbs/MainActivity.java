@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements  OnFragmentListen
                 break;
             case ACTION_GOLIST_WITH_REFRESH:
                 // list에 새로운 데이터를 추가하고
-                lf.setList();
+                lf.setList(lf.listCount);
                 // 화면을 갱신한다
                 lf.adapter.notifyDataSetChanged();
                 // 페이저를 리스트로 이동
